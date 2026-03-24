@@ -87,8 +87,7 @@ def train_flow():
             z_t = t_exp * z1 + (1 - t_exp) * z0
             target_v = z1 - z0
             
-
-            model_in = torch.cat([z_t, cond_ecg], dim=1)
+            # CAMBIADOSDASDFWER23ER
             pred_v = transformer(model_in, t)
             
             loss = F.mse_loss(pred_v, target_v)
