@@ -143,24 +143,30 @@ class TBlock(nn.Module):
         )
     
     def forward(self, x, c, return_attn=False):
-        shift_msa, scale_msa, gate_msa, shift_mlp, scale_mlp, gate_mlp = self.adaLN_modulation(c).chunk(6, dim=1)
+        shift_msa, scale_msa, gate_msa, shift_mlp, scale_mlp, gate_mlp = self.adaLN_modulation(c).chunk(6, dim=-1)
 
-        x_norm1 = self.norm1(x) * (1 + scale_msa.unsqueeze(1)) + shift_msa.unsqueeze(1)
+        x_norm1 = self.norm1(x) * (1 + scale_msa) + shift_msa
         attn_out, attn_weights = self.attn(x_norm1, x_norm1, x_norm1, need_weights=True)
-        x = x + gate_msa.unsqueeze(1) * attn_out
+        x = x + gate_msa * attn_out
 
-        x_norm2 = self.norm2(x) * (1 + scale_mlp.unsqueeze(1)) + shift_mlp.unsqueeze(1)
-        x = x + gate_mlp.unsqueeze(1) * self.mlp(x_norm2)
+        x_norm2 = self.norm2(x) * (1 + scale_mlp) + shift_mlp
+        x = x + gate_mlp * self.mlp(x_norm2)
 
         if return_attn: return x, attn_weights
         return x
 
 class FlowTransformer(nn.Module):
-    def __init__(self, in_channels=32, hidden_size=256, depth=8, num_heads=4):
+    def __init__(self, in_channels=16, ecg_channels=16, hidden_size=256, depth=8, num_heads=4):
         super().__init__()
         self.input_proj = nn.Conv1d(in_channels, hidden_size, kernel_size=1)
         self.time_embedder = nn.Sequential(
             nn.Linear(hidden_size, hidden_size),
+            nn.SiLU(),
+            nn.Linear(hidden_size, hidden_size)
+        )
+
+        self.ecg_embedder = nn.Sequential(
+            nn.Linear(ecg_channels, hidden_size),
             nn.SiLU(),
             nn.Linear(hidden_size, hidden_size)
         )
@@ -189,17 +195,23 @@ class FlowTransformer(nn.Module):
         embedding = torch.cat([torch.cos(args), torch.sin(args)], dim=-1)
         return embedding
         
-    def forward(self, x, t, return_attn=False):
+    def forward(self, x, t, c_ecg, return_attn=False):
         t_emb = self.timestep_embedding(t, self.input_proj.out_channels)
         t_cond = self.time_embedder(t_emb)
+
+        c_ecg_transposed = c_ecg.transpose(1, 2)
+        ecg_cond = self.ecg_embedder(c_ecg_transposed)
+
+        c_global = t_cond.unsqueeze(1) + ecg_cond
 
         h = self.input_proj(x).transpose(1, 2)
         h = h + self.pos_embedding
 
         for block in self.blocks:
-            h = block(h, t_cond)
+            h = block(h, c_global)
             
-        shift, scale = self.adaLN_modulation(t_cond).chunk(2, dim=1)
-        h = self.final_norm(h) * (1 + scale.unsqueeze(1)) + shift.unsqueeze(1)
+        shift, scale = self.adaLN_modulation(c_global).chunk(2, dim=-1)
+        h = self.final_norm(h) * (1 + scale) + shift
+        
         out = self.final_linear(h).transpose(1, 2)
         return out
