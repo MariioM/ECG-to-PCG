@@ -1,0 +1,29 @@
+vae:
+  name: "PCGVAE"
+  in_channels: 1
+  base_channels: 32
+  z_dim: 16
+
+vae_training:
+  epochs: 40
+  batch_size: 32
+  lr: 1e-4
+  weight_decay: 1e-5
+  kl_warmup_epochs: 10
+  max_beta: 0.0005
+  clip_grad: 1.0
+
+rf:
+  hidden_size: 256
+  depth: 8
+  num_heads: 4
+  cfg_prob: 0.15
+
+rf_training:
+  epochs: 1000
+  lr: 5e-5
+  weight_decay: 1e-4
+
+paths:
+  vae_checkpoint: "best_pcg_vae.pth"
+  flow_checkpoint: "best_flow_rectified.pt"
