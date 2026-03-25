@@ -26,12 +26,10 @@ def run_evaluation_tests(steps, scale):
     vae.load_state_dict(torch.load(Config.CHECK_DIR / cfg_models["paths"]["vae_checkpoint"], map_location=device))
     
     ecg_encoder = Encoder1D(in_channels=1, base_channels=32, z_dim=16).to(device)
-    transformer = FlowTransformer(
-        in_channels=32, 
-        hidden_size=cfg_models["rf"]["hidden_size"], 
-        depth=cfg_models["rf"]["depth"], 
-        num_heads=cfg_models["rf"]["num_heads"]
-    ).to(device)
+    transformer = FlowTransformer(in_channels=16, ecg_channels=16,
+                hidden_size=cfg_models["rf"]["hidden_size"], 
+                depth=cfg_models["rf"]["depth"], 
+                num_heads=cfg_models["rf"]["num_heads"]).to(device)
     
     checkpoint = torch.load(Config.CHECK_DIR / cfg_models['paths']['flow_checkpoint'], map_location=device)
     ecg_encoder.load_state_dict(checkpoint['ecg_encoder'])
@@ -65,7 +63,7 @@ def run_evaluation_tests(steps, scale):
                 t = torch.full((B*2,), i/steps, device=device)
                 z_in = torch.cat([z, z], dim=0)
                 c_in = torch.cat([cond, uncond], dim=0)
-                v_pred = transformer(torch.cat([z_in, c_in], dim=1), t)
+                v_pred = transformer(x=z_in, t=t, c_ecg=c_in)
                 v_c, v_u = v_pred.chunk(2)
                 v = v_u + scale * (v_c - v_u)
                 z = z + v * dt
@@ -112,6 +110,3 @@ if __name__ == "__main__":
         pd.DataFrame(final_results).to_csv("cfg_scale_results/scale_metrics.csv", index=False)
     
     print("\nCFG Scale test finished")
-        
-
-
