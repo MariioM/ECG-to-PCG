@@ -44,8 +44,7 @@ def train_flow():
     print(f"Mean: {STATS_MEAN:.4f} | Std: {STATS_STD:.4f}")
 
     ecg_encoder = Encoder1D(in_channels=1, base_channels=32, z_dim=16).to(Config.DEVICE)
-    transformer = FlowTransformer(in_channels=32, hidden_size=256, depth=8, num_heads=4).to(Config.DEVICE)
-
+    transformer = FlowTransformer(in_channels=16, ecg_channels=16, hidden_size=256, depth=8, num_heads=4).to(Config.DEVICE)
     optimizer = optim.AdamW(
         list(ecg_encoder.parameters()) + list(transformer.parameters()), 
         lr=5e-5, weight_decay=1e-4
@@ -88,8 +87,7 @@ def train_flow():
             target_v = z1 - z0
             
 
-            model_in = torch.cat([z_t, cond_ecg], dim=1)
-            pred_v = transformer(model_in, t)
+            pred_v = transformer(x=z_t, t=t, c_ecg=cond_ecg)
             
             loss = F.mse_loss(pred_v, target_v)
             loss.backward()

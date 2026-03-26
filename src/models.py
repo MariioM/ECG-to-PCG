@@ -156,9 +156,12 @@ class TBlock(nn.Module):
         return x
 
 class FlowTransformer(nn.Module):
-    def __init__(self, in_channels=32, hidden_size=256, depth=8, num_heads=4):
+    def __init__(self, in_channels=16, ecg_channels=16, hidden_size=256, depth=8, num_heads=4):
         super().__init__()
-        self.input_proj = nn.Conv1d(in_channels, hidden_size, kernel_size=1)
+        
+        self.audio_proj = nn.Conv1d(in_channels, hidden_size, kernel_size=1)
+        self.ecg_proj = nn.Conv1d(ecg_channels, hidden_size, kernel_size=1)
+        
         self.time_embedder = nn.Sequential(
             nn.Linear(hidden_size, hidden_size),
             nn.SiLU(),
@@ -189,11 +192,14 @@ class FlowTransformer(nn.Module):
         embedding = torch.cat([torch.cos(args), torch.sin(args)], dim=-1)
         return embedding
         
-    def forward(self, x, t, return_attn=False):
-        t_emb = self.timestep_embedding(t, self.input_proj.out_channels)
+    def forward(self, x, t, c_ecg, return_attn=False):
+        t_emb = self.timestep_embedding(t, self.audio_proj.out_channels)
         t_cond = self.time_embedder(t_emb)
 
-        h = self.input_proj(x).transpose(1, 2)
+        h_audio = self.audio_proj(x).transpose(1, 2)
+        h_ecg = self.ecg_proj(c_ecg).transpose(1, 2)
+        h = h_audio + h_ecg
+        
         h = h + self.pos_embedding
 
         for block in self.blocks:

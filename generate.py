@@ -33,7 +33,7 @@ def generate_pcg():
 
     # Load ECG Encoder and Transformer
     ecg_encoder = Encoder1D(in_channels=1, base_channels=32, z_dim=16).to(device)
-    transformer = FlowTransformer(in_channels=32, 
+    transformer = FlowTransformer(in_channels=16, ecg_channels=16, 
                 hidden_size=cfg_models["rf"]["hidden_size"], 
                 depth=cfg_models["rf"]["depth"], 
                 num_heads=cfg_models["rf"]["num_heads"]).to(device)
@@ -76,8 +76,8 @@ def generate_pcg():
             cond_doubled = torch.cat([cond, uncond], dim=0)
             t_doubled = torch.full((B * 2,), t_val, device=device)
 
-            model_in = torch.cat([z_doubled, cond_doubled], dim=1)
-            v_pred_doubled = transformer(model_in, t_doubled)
+        
+            v_pred_doubled = transformer(x=z_doubled, t=t_doubled, c_ecg=cond_doubled)
 
             v_cond, v_uncond = v_pred_doubled.chunk(2, dim=0)
 
