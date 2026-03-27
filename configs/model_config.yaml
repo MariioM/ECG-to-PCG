@@ -20,7 +20,7 @@ rf:
   cfg_prob: 0.15
 
 rf_training:
-  epochs: 1000
+  epochs: 500
   lr: 5e-5
   weight_decay: 1e-4
 
