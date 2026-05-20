@@ -65,7 +65,6 @@ class ECGPCGDataset(Dataset):
                 self.cached_pcg.append(torch.from_numpy(sig_pcg).unsqueeze(0).float())
                 self.cached_paths.append((str(ecg_path), str(pcg_path)))
             
-            # Guardamos en disco para la próxima vez
             torch.save({
                 'ecg': self.cached_ecg,
                 'pcg': self.cached_pcg,

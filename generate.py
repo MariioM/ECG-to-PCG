@@ -98,49 +98,121 @@ def generate_pcg():
 
     sig_fake_filtered = apply_lowpass_filter(sig_fake_raw, cutoff=400, fs=2000)
 
-
     def save_comparison_plot(sig_fake_to_plot, filename, title_suffix):
         fig = plt.figure(figsize=(15, 10))
         gs = fig.add_gridspec(3, 2, height_ratios=[1, 1, 1])
-        
-        # Fila 0: ECG
-        ax0 = fig.add_subplot(gs[0, :])
-        ax0.plot(t_axis, sig_ecg, color='black', label="ECG (Guía)")
-        ax0.set_title("ECG Condition", fontweight='bold')
 
+        ax0 = fig.add_subplot(gs[0, :])
+        ax0.plot(t_axis, sig_ecg, color='black')
+        ax0.set_xlabel("Time (s)", fontsize=16)
+        ax0.set_ylabel("Amplitude", fontsize=16)
+        ax0.legend(loc="upper right")
 
         ax1 = fig.add_subplot(gs[1, 0])
         ax1.plot(t_axis, sig_real, color='green', alpha=0.7)
-        ax1.set_title("Target PCG")
+        ax1.set_xlabel("Time (s)", fontsize=16)
+        ax1.set_ylabel("Amplitude", fontsize=16)
+        ax1.legend(loc="upper right")
 
         ax2 = fig.add_subplot(gs[1, 1], sharey=ax1)
         ax2.plot(t_axis, sig_fake_to_plot, color='red', alpha=0.8)
-        ax2.set_title(f"Generated PCG {title_suffix} (CFG {SCALE})")
-
+        ax2.set_xlabel("Time (s)", fontsize=16)
+        ax2.set_ylabel("Amplitude", fontsize=16)
+        ax2.legend(loc="upper right")
 
         ax3 = fig.add_subplot(gs[2, 0])
         ax3.specgram(sig_real, NFFT=256, Fs=2000, noverlap=128, cmap='magma')
-        ax3.set_title("Real Spectrogram")
+        ax3.set_xlabel("Time (s)", fontsize=16)
+        ax3.set_ylabel("Frequency (Hz)", fontsize=16)
 
         ax4 = fig.add_subplot(gs[2, 1])
         ax4.specgram(sig_fake_to_plot, NFFT=256, Fs=2000, noverlap=128, cmap='magma')
-        ax4.set_title(f"Generated Spectrogram {title_suffix}")
+        ax4.set_xlabel("Time (s)", fontsize=16)
+        ax4.set_ylabel("Frequency (Hz)", fontsize=16)
 
         plt.tight_layout()
         plt.savefig(f"outputs/{filename}")
         plt.close()
-        print(f"Plot saved/{filename}")
+        print(f"Plot saved: outputs/{filename}")
+
+    def save_ecg_plot(filename="ecg_only.png"):
+        fig, ax = plt.subplots(figsize=(15, 3))
+        ax.plot(t_axis, sig_ecg, color='black')
+        ax.set_xlabel("Time (s)", fontsize=16)
+        ax.set_ylabel("Amplitude", fontsize=16)
+        ax.grid(True, alpha=0.8)
+        ax.tick_params(axis='both', which='major', labelsize=14)
+        ax.margins(x=0)
+        ax.legend(loc="upper right")
+        plt.tight_layout()
+        plt.savefig(f"outputs/{filename}")
+        plt.close()
+        print(f"Plot saved: outputs/{filename}")
+
+    def save_pcg_only_plot(sig_fake_to_plot, filename, title_suffix):
+        fig = plt.figure(figsize=(15, 7))
+        gs = fig.add_gridspec(2, 2, height_ratios=[1, 1])
+
+        ax1 = fig.add_subplot(gs[0, 0])
+        ax1.plot(t_axis, sig_real, color='green', alpha=0.7)
+        ax1.set_xlabel("Time (s)", fontsize=16)
+        ax1.set_ylabel("Amplitude", fontsize=16)
+        ax1.grid(True, alpha=0.8)
+        ax1.tick_params(axis='both', which='major', labelsize=14)
+        ax1.margins(x=0)
+        ax1.legend(loc="upper right")
+
+        ax2 = fig.add_subplot(gs[0, 1], sharey=ax1)
+        ax2.plot(t_axis, sig_fake_to_plot, color='red', alpha=0.8)
+        ax2.set_xlabel("Time (s)", fontsize=16)
+        ax2.set_ylabel("Amplitude", fontsize=16)
+        ax2.grid(True, alpha=0.8)
+        ax2.tick_params(axis='both', which='major', labelsize=14)
+        ax2.margins(x=0)
+        ax2.legend(loc="upper right")
+
+        ax3 = fig.add_subplot(gs[1, 0])
+        _, _, _, im3 = ax3.specgram(sig_real, NFFT=256, Fs=2000, noverlap=128, cmap='magma')
+        ax3.specgram(sig_real, NFFT=256, Fs=2000, noverlap=128, cmap='magma')
+        ax3.set_xlabel("Time (s)", fontsize=16)
+        ax3.set_ylabel("Frequency (Hz)", fontsize=16)
+        ax3.tick_params(axis='both', which='major', labelsize=14)
+        cbar3 = fig.colorbar(im3, ax=ax3)
+        cbar3.set_label('Power (dB)', fontsize=16)
+        cbar3.ax.tick_params(labelsize=14)
+
+        ax4 = fig.add_subplot(gs[1, 1])
+        _, _, _, im4 = ax4.specgram(sig_fake_to_plot, NFFT=256, Fs=2000, noverlap=128, cmap='magma')
+        ax4.specgram(sig_fake_to_plot, NFFT=256, Fs=2000, noverlap=128, cmap='magma')
+        ax4.set_xlabel("Time (s)", fontsize=16)
+        ax4.set_ylabel("Frequency (Hz)", fontsize=16)
+        ax4.tick_params(axis='both', which='major', labelsize=14)
+        cbar4 = fig.colorbar(im4, ax=ax4)
+        cbar4.set_label('Power (dB)', fontsize=16)
+        cbar4.ax.tick_params(labelsize=14)
+
+        plt.tight_layout()
+        plt.savefig(f"outputs/{filename}")
+        plt.close()
+        print(f"Plot saved: outputs/{filename}")
+    
 
     save_comparison_plot(sig_fake_raw, "generation_raw.png", "(RAW)")
     save_comparison_plot(sig_fake_filtered, "generation_filtered.png", "(FILTERED)")
 
-def apply_lowpass_filter(data, cutoff=400, fs=2000, order=5):
+    save_ecg_plot("generation_ecg_only.png")
 
+    save_pcg_only_plot(sig_fake_raw, "generation_pcg_only_raw.png", "(RAW)")
+    save_pcg_only_plot(sig_fake_filtered, "generation_pcg_only_filtered.png", "(FILTERED)")
+
+
+def apply_lowpass_filter(data, cutoff=400, fs=2000, order=5):
     nyq = 0.5 * fs
     normal_cutoff = cutoff / nyq
     b, a = signal.butter(order, normal_cutoff, btype='low', analog=False)
     return signal.filtfilt(b, a, data)
 
 if __name__ == "__main__":
-    generate_pcg()
 
+    Path("outputs").mkdir(parents=True, exist_ok=True)
+    generate_pcg()

@@ -39,7 +39,7 @@ def save_comparison_plot(ecg, pcg_real, pcg_gen, path, sr = 2000):
     plt.close()
 
 
-# PLOT A PAIR OF ECG AND PCG FROM DATASET
+# Plot pair of ECG and PCG signals
 def plot_single_pair():
     """Grafica el primer par de señales encontrado en el dataset."""
     if not Config.ECG_DIR.exists():
@@ -77,12 +77,13 @@ def plot_single_pair():
     ax2.grid(True, alpha=0.3)
 
     plt.tight_layout()
+    
     plt.savefig("outputs/check_dataset.png")
     print("Gráfico guardado en 'outputs/check_dataset.png'")
     plt.show()
 
-# VAE PCG RECONSTRUCTION PLOT
-def visualize_vae_reconstruction(model, loader, device, n_samples=4, save_path="outputs/vae_eval.png"):
+# VAE PCG Reconstruction Plot
+def visualize_vae_reconstruction(model, loader, device, n_samples=1, save_path="outputs/vae_eval.png"):
     model.eval()
     with torch.no_grad():
         batch = next(iter(loader))
@@ -91,19 +92,23 @@ def visualize_vae_reconstruction(model, loader, device, n_samples=4, save_path="
         
     real_pcg = real_pcg.cpu().numpy()
     recon_pcg = recon_pcg.cpu().numpy()
+
+    num_samples = real_pcg.shape[-1]
+    time_sec = np.arange(num_samples) / 2000
     
-    fig, axes = plt.subplots(nrows=n_samples, ncols=1, figsize=(12, 3*n_samples), sharex=True)
-    fig.suptitle("Evaluación VAE: Original (Negro) vs Reconstrucción (Rojo)", fontsize=14, y=1.0)
+    fig, axes = plt.subplots(nrows=n_samples, ncols=1, figsize=(12, 3*n_samples), sharex=True)    
     
     for i in range(n_samples):
         ax = axes[i] if n_samples > 1 else axes
-        ax.plot(real_pcg[i, 0, :], color='black', alpha=0.5, label='Original', linewidth=1)
-        ax.plot(recon_pcg[i, 0, :], color='red', alpha=0.7, label='Reconstrucción', linewidth=1, linestyle='--')
-        ax.set_title(f"Muestra #{i+1}", loc='left', fontsize=10, fontweight='bold')
-        ax.grid(True, alpha=0.2)
-        if i == 0: ax.legend(loc="upper right")
-        
-    axes[-1].set_xlabel("Muestras")
+        ax.plot(time_sec, real_pcg[i, 0, :], color='black', alpha=0.5, linewidth=1, label="Original")
+        ax.plot(time_sec, recon_pcg[i, 0, :], color='red', alpha=0.7, linewidth=1, linestyle='--', label="Reconstructed")
+        ax.margins(x=0)
+        ax.set_xlabel("Time (s)", fontsize=16)
+        ax.set_ylabel("Amplitude", fontsize=16)
+        ax.grid(True, alpha=0.8)
+        ax.tick_params(axis='both', which='major', labelsize=14)
+        ax.legend(loc="upper right", fontsize=14)
+
     plt.tight_layout()
     
     Path(save_path).parent.mkdir(parents=True, exist_ok=True)
