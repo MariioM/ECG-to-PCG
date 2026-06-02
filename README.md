@@ -28,19 +28,18 @@ ECG-to-PCG/
 ├── eval_vae.py             # Script for evaluating the VAE model (reconstruction)
 ├── test.py                 # Additional tests and validations
 └── proyecto_info.txt       # Additional project information
-
+```
 ## ⚠️ Data Preparation (CRITICAL)
 
 Due to GitHub storage limitations, the data folder is not included in this repository. For the code to work correctly, you must download the data and manually organize the structure.
 
 The dataset used is EPHNOGRAM.
 The signals must meet the following preprocessing requirements:
-
-    Sampling rate (Downsampled): 2000 Hz
-
-    Segment length: 5 seconds
+- Sampling rate (Downsampled): 2000 Hz
+- Segment length: 5 seconds
 ### Required Directory Structure
 You must create the following structure in the root directory of the project:
+```text
 ECG-to-PCG/
 └── data/
     └── dataset_downsampled/
@@ -52,6 +51,7 @@ ECG-to-PCG/
             ├── ECGPCG_0001_seg0001.csv
             ├── ECGPCG_0001_seg0002.csv
             └── ... (all PCG .csv files)
+```
 *(Ensure that the filenames match exactly in both the ECG and PCG folders for proper sample pairing).*
 ## 🚀 Execution Order and Usage
 
@@ -62,23 +62,25 @@ Before running the scripts, check the configs/ folder to adjust training hyperpa
 ### 2. Train the VAE
 
 First, you need to train the Variational Autoencoder (VAE) to learn the latent representations of the signals. Run:
+```code
 python train_vae.py
+```
 *(You can evaluate the quality of its reconstructions using python eval_vae.py once trained).*
 
 ### 3. Train the Flow Model
 
 After the VAE is successfully trained, train the complete flow-based model by running:
-
+```code
 python train_flow.py
-
+```
 *Model weights and checkpoints will be saved automatically in the checkpoints/ folder as training progresses.*
 
 ### 4. Signal Generation (Inference)
 
 Once the full model is trained, you can generate synthetic PCG signals conditioned on ECG signals using:
-
+```code
 python generate.py
-
+```
 *This script will take validation/test ECG samples and generate their corresponding PCG files. The results will be saved in outputs/.*
 
 ### 5. Classifier-Free Guidance (CFG) Study (Optional)
