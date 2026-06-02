@@ -1,9 +1,5 @@
 # ECG-to-PCG
 
-This repository contains the code for a generative biomedical signal translation system, specifically designed to synthesize phonocardiograms (PCG) from electrocardiogram (ECG) signals.
-
-The project makes use of generative models (including Variational Autoencoders - VAE and Flow-based models) and advanced techniques such as *Classifier-Free Guidance* (CFG) to ensure the temporal and morphological coherence of the audio signals generated from the electrical activity of the heart.
-
 ---
 
 ## 📂 Repository Structure
