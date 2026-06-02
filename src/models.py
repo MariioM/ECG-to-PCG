@@ -122,7 +122,7 @@ class PCGVAE(nn.Module):
     
 
 #===================== TRANSFORMER RECTIFIED FLOW =====================#
-
+# DiT Block
 class TBlock(nn.Module):
     def __init__(self, hidden_size, num_heads, mlp_ratio=4.0):
         super().__init__()
@@ -155,6 +155,7 @@ class TBlock(nn.Module):
         if return_attn: return x, attn_weights
         return x
 
+# Complete Model
 class FlowTransformer(nn.Module):
     def __init__(self, in_channels=32, hidden_size=256, depth=8, num_heads=4):
         super().__init__()
