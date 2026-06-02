@@ -28,6 +28,7 @@ def train_flow():
     cfg_model = Config.load_model_config()
     train_loader, val_loader, _ = get_dataloaders(Config)
 
+    # Instance the pretrained VAE
     vae = PCGVAE(
         in_channels=cfg_model["vae"]["in_channels"],
         base_channels=cfg_model["vae"]["base_channels"],
@@ -42,7 +43,8 @@ def train_flow():
 
     STATS_MEAN, STATS_STD = calculate_latent_stats(vae, train_loader, Config.DEVICE)
     print(f"Mean: {STATS_MEAN:.4f} | Std: {STATS_STD:.4f}")
-
+    
+    # Instance the ECG encoder and the Rectified Flow Model
     ecg_encoder = Encoder1D(in_channels=1, base_channels=32, z_dim=16).to(Config.DEVICE)
     transformer = FlowTransformer(in_channels=32, hidden_size=256, depth=8, num_heads=4).to(Config.DEVICE)
 
@@ -76,19 +78,24 @@ def train_flow():
             
             cond_ecg, _ = ecg_encoder(ecg)
             
+            # CFG null condition
             if torch.rand(1).item() < CFG_PROB:
                 cond_ecg = torch.zeros_like(cond_ecg)
                 
             B = z1.shape[0]
             t = torch.rand(B, device=Config.DEVICE)
+            # Initialize the Gaussian Noise
             z0 = torch.randn_like(z1)
             
             t_exp = t.view(B, 1, 1)
+            # Update the actual state
             z_t = t_exp * z1 + (1 - t_exp) * z0
+            # Stablish target velocity
             target_v = z1 - z0
             
-
+            
             model_in = torch.cat([z_t, cond_ecg], dim=1)
+            # Calculate the predicted velocity
             pred_v = transformer(model_in, t)
             
             loss = F.mse_loss(pred_v, target_v)
