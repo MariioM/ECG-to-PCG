@@ -19,6 +19,7 @@ def seed_everything(seed):
     torch.backends.cudnn.deterministic = True
     torch.backends.cudnn.benchmark = False
 
+# Comparison plot between real and sintetic PCG.
 def save_comparison_plot(ecg, pcg_real, pcg_gen, path, sr = 2000):
     fig, axes = plt.subplots(3, 1, figsize(10, 8))
     t = np.linspace(0, len(ecg)/sr, len(ecg))
